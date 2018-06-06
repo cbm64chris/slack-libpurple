@@ -498,12 +498,15 @@ void slack_handle_message(SlackAccount *sa, SlackObject *obj, json_value *json, 
 		json_value *old_message = json_get_prop(json, "previous_message");
 		/* this may consist only of added attachments, no changed text */
 		gboolean changed = g_strcmp0(json_get_prop_strptr(message, "text"), json_get_prop_strptr(old_message, "text"));
-		g_string_append(html, "<font color=\"#717274\"><i>[edit]</i></font> ");
-		slack_json_to_html(html, sa, message, &flags);
-		if (old_message && changed) {
-			g_string_append(html, "<br>(Old message: ");
-			slack_json_to_html(html, sa, old_message, NULL);
-			g_string_append(html, ")");
+		// No change means that this is a link update, which we want to suppress.
+		if (changed) {
+			g_string_append(html, "<font color=\"#717274\"><i>[edit]</i></font> ");
+			slack_json_to_html(html, sa, message, &flags);
+			if (old_message) {
+				g_string_append(html, "<br>(Old message: ");
+				slack_json_to_html(html, sa, old_message, NULL);
+				g_string_append(html, ")");
+			}
 		}
 	}
 	else if (!g_strcmp0(subtype, "message_deleted")) {
