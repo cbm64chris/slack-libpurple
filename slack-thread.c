@@ -72,20 +72,44 @@ static gboolean slack_is_slack_ts(const char *str) {
 }
 
 static time_t slack_get_ts_from_time_str(const char *time_str) {
-	struct tm tm;
+	struct tm tm, tmptm;
 	char *result;
+	const char *time_str_end = time_str + strlen(time_str);
 
 	time_t ts = time(NULL);
 	localtime_r(&ts, &tm);
 
+	// Seconds only (will produce the time with the matching second within
+	// the last minute).
+	result = strptime(time_str, "%S", &tmptm);
+	if (result == time_str_end) {
+		if (tmptm.tm_sec > tm.tm_sec)
+			tm.tm_min--;
+		tm.tm_sec = tmptm.tm_sec;
+		return mktime(&tm);
+	}
+
+	// Minutes and seconds (will produce the time with the matching minute
+	// and second within the last hour).
+	result = strptime(time_str, "%M:%S", &tmptm);
+	if (result == time_str_end) {
+		if (tmptm.tm_min == tm.tm_min && tmptm.tm_sec > tm.tm_sec)
+			tm.tm_min--;
+		if (tmptm.tm_min > tm.tm_min)
+			tm.tm_hour--;
+		tm.tm_sec = tmptm.tm_sec;
+		tm.tm_min = tmptm.tm_min;
+		return mktime(&tm);
+	}
+
 	// Time only.
 	result = strptime(time_str, "%X", &tm);
-	if (result == time_str + strlen(time_str))
+	if (result == time_str_end)
 		return mktime(&tm);
 
 	// Date and time.
 	result = strptime(time_str, "%x-%X", &tm);
-	if (result == time_str + strlen(time_str))
+	if (result == time_str_end)
 		return mktime(&tm);
 
 	return 0;
