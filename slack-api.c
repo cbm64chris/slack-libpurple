@@ -46,6 +46,11 @@ static void api_run(SlackAccount *sa);
 static void api_cb(PurpleUtilFetchUrlData *fetch, gpointer data, const gchar *buf, gsize len, const gchar *error) {
 	SlackAccount *sa = data;
 	SlackAPICall *call = g_queue_pop_head(&sa->api_calls);
+	if (call == NULL)
+	{
+		purple_debug_error("slack", "Got unknown api callback! This should never happen.\n");
+		return;
+	}
 	g_return_if_fail(call->fetch == fetch);
 	call->fetch = NULL;
 
