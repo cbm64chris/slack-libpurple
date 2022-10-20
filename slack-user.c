@@ -242,7 +242,7 @@ static void avatar_cb(G_GNUC_UNUSED PurpleUtilFetchUrlData *fetch, gpointer data
 		return;
 	}
 
-	gpointer icon_data = g_memdup(buf, len);
+	gpointer icon_data = g_memdup2(buf, len);
 	purple_buddy_icons_set_for_user(sa->account, user->object.name, icon_data, len, user->avatar_hash);
 	g_object_unref(user);
 
